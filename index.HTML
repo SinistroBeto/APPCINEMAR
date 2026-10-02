@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CINEMAR - Cronograma de Operações & Programação</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #1e1e1e;
+      --card: #282828;
+      --panel: #181818;
+      --azul: #00a2e8;
+      --vermelho: #ff1d25;
+      --yellow: #ffcc00;
+      --text: #ffffff;
+      --muted: #aaaaaa;
+      --border: #333333;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Montserrat', sans-serif;
+      padding: 16px 14px 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .app { width: 100%; max-width: 1460px; display: flex; flex-direction: column; gap: 16px; }
+
+    /* Topo / Logo */
+    header { text-align: center; }
+    .logo {
+      font-size: 38px;
+      font-weight: 900;
+      letter-spacing: 5px;
+      display: inline-flex;
+      align-items: center;
+    }
+    .c-blue { color: var(--azul); }
+    .c-white { color: #fff; }
+    .c-m { color: var(--vermelho); position: relative; display: inline-block; padding: 0 2px; }
+    .subhead {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+
+    /* Barra Superior */
+    .top-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--panel);
+      padding: 10px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      gap: 12px;
+    }
+    .clock-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: #00ffaa;
+      background: rgba(0,255,170,0.1);
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid rgba(0,255,170,0.3);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .pulse {
+      width: 8px;
+      height: 8px;
+      background: #00ffaa;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #00ffaa;
+      animation: p 1.5s infinite;
+    }
+    @keyframes p { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; transform: scale(1.2); } }
+    .days-group { display: flex; gap: 6px; flex-wrap: wrap; }
+    .day-btn {
+      background: #222;
+      border: 1px solid var(--border);
+      color: #ccc;
+      font-weight: 700;
+      font-size: 12px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .day-btn:hover { background: #333; color: #fff; }
+    .day-btn.active { background: #fff; color: #000; border-color: #fff; }
+    .sim-box { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--muted); }
+    .sim-box input[type="range"] { width: 140px; accent-color: var(--yellow); cursor: pointer; }
+    .btn-pill {
+      background: #333;
+      border: 1px solid #444;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 16px;
+      cursor: pointer;
+    }
+    .btn-pill.on { background: #008855; border-color: #00aa66; }
+
+    /* Grid Principal */
+    .main-grid { display: grid; grid-template-columns: 1fr 340px; gap: 16px; align-items: start; }
+    @media (max-width: 1080px) { .main-grid { grid-template-columns: 1fr; } }
+
+    /* Timeline */
+    .timeline-card {
+      background: var(--card);
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      padding: 24px 16px;
+      overflow: hidden;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+    }
+    .timeline-view {
+      position: relative;
+      width: 100%;
+      overflow-x: auto;
+      padding: 95px 10px 95px;
+    }
+    .timeline-wrap {
+      position: relative;
+      width: 100%;
+      min-width: 820px;
+    }
+
+    .timeline-box {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      border: 4px solid #000;
+      border-radius: 20px;
+      overflow: hidden;
+      background: #000;
+    }
+    .track-row { display: flex; height: 50px; position: relative; align-items: center; }
+    .row-azul { background: var(--azul); }
+    .row-vermelho { background: var(--vermelho); }
+    .track-div { height: 4px; background: #000; width: 100%; }
+
+    /* Títulos AZUL e VERMELHO contidos e proporcionais */
+    .lane-title-block {
+      width: 125px;
+      min-width: 125px;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 15px;
+      letter-spacing: 1.5px;
+      color: #fff;
+      border-right: 4px solid #000;
+      text-transform: uppercase;
+      user-select: none;
+      z-index: 6;
+    }
+    .track-content { position: relative; flex: 1; height: 100%; }
+
+    .movie-capsule {
+      position: absolute;
+      top: 7px;
+      bottom: 7px;
+      background: #fff;
+      border: 2.5px solid #000;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px;
+      cursor: pointer;
+      user-select: none;
+      z-index: 8;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+      transition: transform 0.15s;
+    }
+    .movie-capsule:hover { transform: scale(1.02); }
+    .movie-capsule.blue .c-title { color: #005a8e; }
+    .movie-capsule.red .c-title { color: #b80006; }
+    .c-title {
+      font-weight: 800;
+      font-size: 11px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-transform: uppercase;
+      margin-right: 6px;
+    }
+    .c-time {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 700;
+      color: #444;
+      white-space: nowrap;
+    }
+
+    /* Balões / Pins de Notificação */
+    .pin-layer { position: absolute; left: 139px; right: 14px; pointer-events: none; }
+    .pin-top { bottom: calc(100% + 4px); height: 100px; }
+    .pin-bottom { top: calc(100% + 4px); height: 100px; }
+    .pin-marker {
+      position: absolute;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      pointer-events: auto;
+    }
+    .pin-marker-top { justify-content: flex-end; bottom: 0; }
+    .pin-marker-bottom { justify-content: flex-start; top: 0; }
+
+    /* Balões com fundo sólido e z-index superior, prevenindo sobreposição */
+    .pin-bubble {
+      background: #ffffff;
+      color: #000000;
+      border: 2.5px solid #000000;
+      border-radius: 12px;
+      padding: 4px 8px;
+      text-align: center;
+      white-space: nowrap;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.4);
+      z-index: 2;
+      min-width: 62px;
+      position: relative;
+    }
+    .b-title { font-size: 9.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+    .b-time { font-family: 'JetBrains Mono', monospace; font-size: 9px; font-weight: 700; color: #333; margin-top: 1px; }
+
+    .pin-stem { width: 3px; background: #ffffff; z-index: 1; }
+    .pin-dot { width: 8px; height: 8px; background: #ffffff; border: 2px solid #000000; border-radius: 50%; z-index: 1; }
+
+    .pin-marker.active-highlight .pin-bubble {
+      background: var(--yellow) !important;
+      border-color: #000000 !important;
+      animation: bounce 1s infinite alternate;
+    }
+    .pin-marker.active-highlight .pin-stem,
+    .pin-marker.active-highlight .pin-dot {
+      background: var(--yellow) !important;
+    }
+    @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-3px); } }
+
+    /* Linha Vertical Branca passa ATRÁS dos balões (z-index: 15) */
+    .current-time-indicator {
+      position: absolute;
+      top: -80px;
+      bottom: -70px;
+      width: 3.5px;
+      background: #ffffff;
+      box-shadow: 0 0 10px #ffffff;
+      z-index: 15;
+      pointer-events: none;
+      transform: translateX(-50%);
+      transition: left 0.15s linear;
+    }
+    .time-badge {
+      position: absolute;
+      top: -14px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #ffffff;
+      color: #000000;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 2px solid #000000;
+      white-space: nowrap;
+    }
+
+    .timeline-axis { position: absolute; bottom: -50px; left: 139px; right: 14px; height: 20px; }
+    .axis-tick {
+      position: absolute;
+      transform: translateX(-50%);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      color: #888;
+    }
+    .axis-tick::before {
+      content: '';
+      position: absolute;
+      top: -6px;
+      left: 50%;
+      width: 2px;
+      height: 5px;
+      background: #555;
+      transform: translateX(-50%);
+    }
+
+    /* Afazeres Lateral */
+    .tasks-card {
+      background: var(--card);
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      padding: 18px 14px;
+      max-height: 560px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+    }
+    .card-title {
+      font-size: 14px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .badge-count { background: #333; font-size: 10px; padding: 2px 7px; border-radius: 10px; color: var(--muted); }
+    .tasks-list {
+      list-style: none;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding-right: 4px;
+    }
+    .task-item {
+      background: #1c1c1c;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 9px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      transition: 0.2s;
+      border-left: 4px solid #555;
+    }
+    .task-item.active {
+      background: rgba(255,204,0,0.12);
+      border-color: var(--yellow);
+      border-left-color: var(--yellow);
+      transform: translateX(2px);
+    }
+    .task-item.active .task-name { color: var(--yellow); font-weight: 800; }
+    .task-info { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+    .task-name { font-size: 12px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .task-sub { font-size: 10px; color: var(--muted); }
+    .task-time {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      background: #2a2a2a;
+      padding: 3px 6px;
+      border-radius: 5px;
+      color: #fff;
+      white-space: nowrap;
+    }
+    .tag-room { font-size: 9px; font-weight: 800; padding: 1px 5px; border-radius: 4px; text-transform: uppercase; }
+    .tag-azul { background: rgba(0,162,232,0.2); color: var(--azul); }
+    .tag-vermelho { background: rgba(255,29,37,0.2); color: #ff6666; }
+    .tag-geral { background: #333; color: #ccc; }
+
+    /* Formulário & Limpeza */
+    .bottom-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-top: 4px; }
+    @media (max-width: 900px) { .bottom-grid { grid-template-columns: 1fr; } }
+    .input-card { background: var(--card); border-radius: 14px; border: 1px solid var(--border); padding: 18px; }
+    .form-group { display: flex; flex-direction: column; gap: 10px; }
+    .room-selector { display: flex; gap: 8px; }
+    .btn-room {
+      flex: 1;
+      padding: 8px;
+      border-radius: 8px;
+      font-weight: 800;
+      font-size: 12px;
+      border: 2px solid transparent;
+      cursor: pointer;
+      background: #222;
+      color: #888;
+      transition: 0.2s;
+    }
+    .btn-room.active.azul { background: var(--azul); color: #fff; border-color: #fff; }
+    .btn-room.active.vermelho { background: var(--vermelho); color: #fff; border-color: #fff; }
+    .input-days-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+    .p-pill {
+      font-size: 11px;
+      font-weight: 700;
+      background: #222;
+      border: 1px solid var(--border);
+      color: #aaa;
+      padding: 4px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .p-pill.selected { background: #fff; color: #000; border-color: #fff; }
+
+    .textarea-wrap { position: relative; }
+    textarea {
+      width: 100%;
+      height: 115px;
+      background: #161616;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: #fff;
+      font-family: 'Montserrat', sans-serif;
+      font-size: 12px;
+      padding: 10px;
+      line-height: 1.5;
+      resize: none;
+      outline: none;
+    }
+    textarea:focus { border-color: var(--azul); }
+    .btn-submit {
+      background: #008855;
+      color: #fff;
+      font-weight: 800;
+      font-size: 13px;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .btn-submit:hover { background: #00aa66; }
+
+    .clear-card {
+      background: var(--card);
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .btn-clear-modal {
+      background: #7a1010;
+      color: #fff;
+      border: none;
+      font-weight: 800;
+      font-size: 12px;
+      padding: 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .btn-clear-modal:hover { background: #a81515; }
+
+    /* Modais */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: 0.2s;
+      backdrop-filter: blur(4px);
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: auto; }
+    .modal-box {
+      background: #222;
+      border: 1px solid #444;
+      border-radius: 14px;
+      width: 90%;
+      max-width: 440px;
+      padding: 22px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .modal-title { font-size: 16px; font-weight: 800; color: #ff5555; }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px; }
+    .btn-action { padding: 8px 14px; border-radius: 6px; font-size: 12px; font-weight: 700; border: none; cursor: pointer; }
+    .btn-cancel { background: #444; color: #fff; }
+    .btn-danger { background: #cc1111; color: #fff; }
+    .btn-danger:disabled { background: #552222; color: #888; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div class="logo">
+        <span class="c-blue">C</span><span class="c-white">INE</span><span class="c-m">M</span><span class="c-blue">AR</span>
+      </div>
+      <div class="subhead">Cronograma de Operações &amp; Programação de Salas</div>
+    </header>
+
+    <div class="top-bar">
+      <div class="clock-badge"><div class="pulse"></div><span id="liveClockBadge">--:--:--</span></div>
+      <div class="days-group" id="dayButtons"></div>
+      <div class="sim-box">
+        <span>Simular Horário:</span>
+        <input type="range" id="simSlider" min="960" max="1440" value="1050">
+        <span id="simLabel" style="font-family:'JetBrains Mono'; font-weight:700;">17:30</span>
+        <button class="btn-pill on" id="btnModeToggle">AO VIVO</button>
+        <button class="btn-pill on" id="btnNotifyToggle">NOTIFICAÇÕES</button>
+      </div>
+    </div>
+
+    <div class="main-grid">
+      <div class="timeline-card">
+        <div class="timeline-view">
+          <div class="timeline-wrap" id="timelineWrap">
+            <div class="pin-layer pin-top" id="pinTop"></div>
+            <div class="timeline-box">
+              <div class="track-row row-azul">
+                <div class="lane-title-block">AZUL</div>
+                <div class="track-content" id="trackAzul"></div>
+              </div>
+              <div class="track-div"></div>
+              <div class="track-row row-vermelho">
+                <div class="lane-title-block">VERMELHO</div>
+                <div class="track-content" id="trackVermelho"></div>
+              </div>
+            </div>
+            <div class="pin-layer pin-bottom" id="pinBottom"></div>
+            <div class="current-time-indicator" id="timeIndicator">
+              <div class="time-badge" id="indicatorBadge">--:--</div>
+            </div>
+            <div class="timeline-axis" id="timeAxis"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tasks-card">
+        <div class="card-title">Afazeres do Dia <span class="badge-count" id="tasksCount">0 tarefas</span></div>
+        <ul class="tasks-list" id="tasksList"></ul>
+      </div>
+    </div>
+
+    <div class="bottom-grid">
+      <div class="input-card">
+        <div class="card-title">Adicionar ao Cronograma</div>
+        <div class="form-group">
+          <div class="room-selector">
+            <button class="btn-room active azul" data-room="AZUL">SALA AZUL</button>
+            <button class="btn-room vermelho" data-room="VERMELHO">SALA VERMELHA</button>
+          </div>
+          <div class="input-days-pills" id="inputDayPills"></div>
+          <div class="textarea-wrap">
+            <textarea id="scheduleInput" placeholder="nome do filme&#10;tempo do filme&#10;primeiro horário do filme&#10;segundo horário do filme (se houver)&#10;terceiro horário do filme (se houver)"></textarea>
+          </div>
+          <button class="btn-submit" id="btnAddSchedule">+ Adicionar Filme com Trailers (+5min)</button>
+        </div>
+      </div>
+
+      <div class="clear-card">
+        <div>
+          <div class="card-title" style="color:#ff6666;">Gerenciar Dados</div>
+          <p style="font-size:11px; color:#aaa; line-height:1.5;">Apague a grade do dia selecionado ou redefina o cronograma completo.</p>
+        </div>
+        <button class="btn-clear-modal" id="btnOpenClear">Limpar Cronograma</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="clearModal">
+    <div class="modal-box">
+      <div class="modal-title">Limpar Cronograma</div>
+      <p style="font-size:12px; color:#ccc;">Selecione o que deseja apagar permanentemente:</p>
+      <div style="display:flex; flex-direction:column; gap:8px; font-size:12px;">
+        <label><input type="radio" name="clearScope" value="day" checked> Apenas o dia selecionado (<span id="clearDayName"></span>)</label>
+        <label><input type="radio" name="clearScope" value="all"> Apagar TODOS os dias da semana</label>
+      </div>
+      <label style="font-size:12px; color:var(--yellow); display:flex; align-items:center; gap:8px; margin-top:8px;">
+        <input type="checkbox" id="chkConfirmClear"> Sim, tenho certeza que desejo apagar
+      </label>
+      <div class="modal-actions">
+        <button class="btn-action btn-cancel" id="btnCancelClear">Cancelar</button>
+        <button class="btn-action btn-danger" id="btnConfirmClear" disabled>Apagar Dados</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="movieModal">
+    <div class="modal-box">
+      <div class="modal-title" style="color:#00a2e8;" id="movieModalTitle">Detalhes da Sessão</div>
+      <div id="movieModalInfo" style="font-size:12px; line-height:1.6; color:#ddd;"></div>
+      <div class="modal-actions">
+        <button class="btn-action btn-cancel" id="btnCancelMovie">Fechar</button>
+        <button class="btn-action btn-danger" id="btnDeleteMovie">Remover Sessão</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+    const DAYS = ['TER', 'QUA', 'QUI', 'SEX', 'SAB', 'DOM', 'SEG'];
+    const DAY_MAP = { 0: 'DOM', 1: 'SEG', 2: 'TER', 3: 'QUA', 4: 'QUI', 5: 'SEX', 6: 'SAB' };
+    const STORAGE_KEY = 'cinemar_v8_schedule';
+
+    let currentDay = detectDay();
+    let inputRoom = 'AZUL';
+    let isLive = true;
+    let simMin = 17 * 60 + 30;
+    let notifyOn = true;
+    let audioCtx = null;
+    let selectedMovie = null;
+
+    function detectDay() {
+      const d = DAY_MAP[new Date().getDay()];
+      return DAYS.includes(d) ? d : 'TER';
+    }
+
+    function getDefaultData() {
+      // Programação fixa semanal oficial do CINEMAR
+      const terAsexAzul = [
+        { id: 101, title: 'Verity', start: 18 * 60, raw: 115, dur: 120, end: 20 * 60 },
+        { id: 102, title: 'Verity', start: 21 * 60, raw: 115, dur: 120, end: 23 * 60 }
+      ];
+
+      const terAsexVermelho = [
+        { id: 201, title: 'Mascha e os ursos', start: 17 * 60, raw: 80, dur: 85, end: 17 * 60 + 85 },
+        { id: 202, title: 'Melhores amigas', start: 19 * 60, raw: 105, dur: 110, end: 19 * 60 + 110 },
+        { id: 203, title: 'Residente Evil', start: 21 * 60 + 50, raw: 100, dur: 105, end: 21 * 60 + 50 + 105 }
+      ];
+
+      const fdsAzul = [
+        { id: 301, title: 'Homem aranha', start: 15 * 60, raw: 135, dur: 140, end: 15 * 60 + 140 },
+        { id: 302, title: 'Verity', start: 18 * 60 + 20, raw: 115, dur: 120, end: 20 * 60 + 20 },
+        { id: 303, title: 'Verity', start: 21 * 60 + 20, raw: 115, dur: 120, end: 23 * 60 + 20 }
+      ];
+
+      const fdsVermelho = [
+        { id: 401, title: 'Mascha e os ursos', start: 16 * 60, raw: 80, dur: 85, end: 16 * 60 + 85 },
+        { id: 402, title: 'Melhores amigas', start: 18 * 60 + 30, raw: 105, dur: 110, end: 18 * 60 + 30 + 110 },
+        { id: 403, title: 'Residente Evil', start: 21 * 60 + 30, raw: 100, dur: 105, end: 21 * 60 + 30 + 105 }
+      ];
+
+      return {
+        'TER': { AZUL: JSON.parse(JSON.stringify(terAsexAzul)), VERMELHO: JSON.parse(JSON.stringify(terAsexVermelho)) },
+        'QUA': { AZUL: JSON.parse(JSON.stringify(terAsexAzul)), VERMELHO: JSON.parse(JSON.stringify(terAsexVermelho)) },
+        'QUI': { AZUL: JSON.parse(JSON.stringify(terAsexAzul)), VERMELHO: JSON.parse(JSON.stringify(terAsexVermelho)) },
+        'SEX': { AZUL: JSON.parse(JSON.stringify(terAsexAzul)), VERMELHO: JSON.parse(JSON.stringify(terAsexVermelho)) },
+        'SAB': { AZUL: JSON.parse(JSON.stringify(fdsAzul)), VERMELHO: JSON.parse(JSON.stringify(fdsVermelho)) },
+        'DOM': { AZUL: JSON.parse(JSON.stringify(fdsAzul)), VERMELHO: JSON.parse(JSON.stringify(fdsVermelho)) },
+        'SEG': { AZUL: [], VERMELHO: [] }
+      };
+    }
+
+    function loadData() {
+      try { const s = localStorage.getItem(STORAGE_KEY); if (s) return JSON.parse(s); } catch (e) {}
+      return getDefaultData();
+    }
+    function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(db)); }
+    const db = loadData();
+
+    function min2str(m) {
+      let x = Math.round(m) % 1440; if (x < 0) x += 1440;
+      return `${String(Math.floor(x/60)).padStart(2,'0')}:${String(x%60).padStart(2,'0')}`;
+    }
+    function str2min(s) {
+      if (!s) return null;
+      const c = s.toLowerCase().replace('h',':').split(':');
+      if (c.length >= 2) return parseInt(c[0],10)*60 + parseInt(c[1],10);
+      if (c.length === 1 && !isNaN(c[0])) return parseInt(c[0],10)*60;
+      return null;
+    }
+    function parseDuration(s) {
+      if (!s) return 120;
+      const c = s.toLowerCase().replace('h',':');
+      if (c.includes(':')) {
+        const p = c.split(':');
+        return parseInt(p[0],10)*60 + (parseInt(p[1],10)||0);
+      }
+      return parseInt(s,10) || 120;
+    }
+
+    function beep() {
+      if (!notifyOn) return;
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator(), g = audioCtx.createGain();
+        osc.connect(g); g.connect(audioCtx.destination);
+        osc.frequency.setValueAtTime(587, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(880, audioCtx.currentTime + 0.2);
+        g.gain.setValueAtTime(0.2, audioCtx.currentTime);
+        g.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.3);
+        osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+      } catch (e) {}
+      if ('vibrate' in navigator) navigator.vibrate([150, 80, 150]);
+    }
+
+    let timelineStart = 17 * 60, timelineEnd = 23 * 60 + 42;
+
+    function render() {
+      const dayData = db[currentDay] || { AZUL: [], VERMELHO: [] };
+      const azul = [...dayData.AZUL].sort((a,b)=>a.start-b.start);
+      const verm = [...dayData.VERMELHO].sort((a,b)=>a.start-b.start);
+      const all = [...azul, ...verm];
+
+      const tAzul = $('trackAzul');
+      const tVerm = $('trackVermelho');
+      const pTop = $('pinTop');
+      const pBottom = $('pinBottom');
+      const tAxis = $('timeAxis');
+
+      tAzul.innerHTML = ''; tVerm.innerHTML = ''; pTop.innerHTML = ''; pBottom.innerHTML = ''; tAxis.innerHTML = '';
+
+      if (all.length > 0) {
+        const minStart = Math.min(...all.map(m=>m.start));
+        const maxStart = Math.max(...all.map(m=>m.start));
+        const maxEnd = Math.max(...all.map(m=>m.end));
+        timelineStart = minStart - 60; // 1h antes do primeiro filme (ENTRADA)
+        timelineEnd = maxEnd + 20;     // 20m após o último filme (SAÍDA)
+      } else {
+        timelineStart = 17 * 60; timelineEnd = 24 * 60;
+      }
+      if (timelineEnd <= timelineStart) timelineEnd = timelineStart + 360;
+      const span = timelineEnd - timelineStart;
+
+      $('simSlider').min = timelineStart;
+      $('simSlider').max = timelineEnd;
+
+      function getPct(m) {
+        const c = Math.max(timelineStart, Math.min(timelineEnd, m));
+        return ((c - timelineStart) / span) * 100;
+      }
+
+      // Eixo de Horas
+      const step = span > 480 ? 120 : 60;
+      const firstTick = Math.ceil(timelineStart / 60) * 60;
+      for (let t = firstTick; t <= timelineEnd; t += step) {
+        const tk = document.createElement('div');
+        tk.className = 'axis-tick';
+        tk.style.left = `${getPct(t)}%`;
+        tk.textContent = min2str(t);
+        tAxis.appendChild(tk);
+      }
+
+      // Cápsulas dos Filmes
+      function addCapsule(m, track, colorClass, room) {
+        const c = document.createElement('div');
+        c.className = `movie-capsule ${colorClass}`;
+        c.style.left = `${getPct(m.start)}%`;
+        c.style.width = `calc(${getPct(m.end) - getPct(m.start)}% - 4px)`;
+        c.innerHTML = `<span class="c-title">${m.title}</span><span class="c-time">${min2str(m.start)} - ${min2str(m.end)}</span>`;
+        c.onclick = () => openMovie(m, room);
+        track.appendChild(c);
+      }
+      azul.forEach(m => addCapsule(m, tAzul, 'blue', 'AZUL'));
+      verm.forEach(m => addCapsule(m, tVerm, 'red', 'VERMELHO'));
+
+      // Balões de Notificação
+      const topBalloons = [], btmBalloons = [];
+      if (all.length > 0) {
+        const firstStart = Math.min(...all.map(m=>m.start));
+        const lastStart = Math.max(...all.map(m=>m.start));
+        const lastEnd = Math.max(...all.map(m=>m.end));
+
+        topBalloons.push({ title: 'ENTRADA', timeMin: firstStart - 60, timeStr: min2str(firstStart - 60), type: 'entrada' });
+        topBalloons.push({ title: 'SAÍDA', timeMin: lastEnd + 20, timeStr: min2str(lastEnd + 20), type: 'saida' });
+        topBalloons.push({ title: 'PORTÃO', timeMin: lastStart + 20, timeStr: min2str(lastStart + 20), type: 'portao' });
+      }
+
+      // Processamento das salas para balões e tarefa LIMPEZA
+      [ { list: azul, balloons: topBalloons }, { list: verm, balloons: btmBalloons } ].forEach(({ list, balloons }) => {
+        list.forEach((m, i) => {
+          balloons.push({ title: 'INÍCIO', timeMin: m.start, timeStr: min2str(m.start), type: 'inicio' });
+          balloons.push({ title: 'FIM', timeMin: m.end, timeStr: min2str(m.end), type: 'fim' });
+
+          // Balão LIMPEZA centralizado no meio do intervalo + mostra tempo disponível
+          if (i < list.length - 1) {
+            const nextStart = list[i + 1].start;
+            const avail = nextStart - m.end;
+            if (avail > 0) {
+              balloons.push({
+                title: 'LIMPEZA',
+                timeMin: m.end + (avail / 2),
+                timeStr: `${avail} min`,
+                type: 'limpeza'
+              });
+            }
+          }
+        });
+      });
+
+      // Render pins anti-colisão (Z-index 50-48)
+      function renderPins(list, container, pos) {
+        list.sort((a,b)=>a.timeMin-b.timeMin);
+        const stems = [16, 52, 88];
+        const lastPosAtLevel = [-999, -999, -999];
+
+        list.forEach(b => {
+          let pct = getPct(b.timeMin);
+          if (b.type === 'entrada') pct = 2.5;
+          if (b.type === 'saida') pct = 97.5;
+
+          let lvl = 0;
+          for (let l = 0; l < 3; l++) {
+            if (pct - lastPosAtLevel[l] >= 8.5) { lvl = l; break; }
+            if (l === 2) lvl = 2;
+          }
+          lastPosAtLevel[lvl] = pct;
+
+          const el = document.createElement('div');
+          el.className = `pin-marker pin-marker-${pos}`;
+          el.dataset.min = Math.round(b.timeMin);
+          el.dataset.title = b.title;
+          el.style.left = `${pct}%`;
+          el.style.zIndex = 50 - lvl;
+
+          const stemH = stems[lvl];
+          if (pos === 'top') {
+            el.innerHTML = `<div class="pin-bubble"><div class="b-title">${b.title}</div><div class="b-time">${b.timeStr}</div></div><div class="pin-stem" style="height:${stemH}px;"></div><div class="pin-dot"></div>`;
+          } else {
+            el.innerHTML = `<div class="pin-dot"></div><div class="pin-stem" style="height:${stemH}px;"></div><div class="pin-bubble"><div class="b-title">${b.title}</div><div class="b-time">${b.timeStr}</div></div>`;
+          }
+          container.appendChild(el);
+        });
+      }
+
+      renderPins(topBalloons, pTop, 'top');
+      renderPins(btmBalloons, pBottom, 'bottom');
+
+      renderTasks(all);
+      updateIndicator();
+    }
+
+    function renderTasks(all) {
+      const listEl = $('tasksList');
+      listEl.innerHTML = '';
+      if (all.length === 0) {
+        listEl.innerHTML = '<li style="color:#777; font-size:12px; text-align:center; padding:20px;">Nenhum evento agendado para este dia.</li>';
+        $('tasksCount').textContent = '0 tarefas';
+        return;
+      }
+
+      const tasks = [];
+      const firstStart = Math.min(...all.map(m=>m.start));
+      const lastStart = Math.max(...all.map(m=>m.start));
+      const lastEnd = Math.max(...all.map(m=>m.end));
+
+      tasks.push({ min: firstStart - 60, time: min2str(firstStart - 60), name: 'ENTRADA DE FUNCIONÁRIOS', sub: '1h antes da 1ª sessão', room: 'GERAL', tag: 'tag-geral' });
+
+      const dayData = db[currentDay] || { AZUL: [], VERMELHO: [] };
+      ['AZUL', 'VERMELHO'].forEach(room => {
+        const list = [...(dayData[room] || [])].sort((a,b)=>a.start-b.start);
+        const tagClass = room === 'AZUL' ? 'tag-azul' : 'tag-vermelho';
+        list.forEach((m, i) => {
+          tasks.push({ min: m.start, time: min2str(m.start), name: `INÍCIO: ${m.title}`, sub: `Duração: ${m.dur}m (+5m trailer)`, room, tag: tagClass });
+          tasks.push({ min: m.end, time: min2str(m.end), name: `TÉRMINO: ${m.title}`, sub: `Fim da exibição`, room, tag: tagClass });
+          if (i < list.length - 1) {
+            const avail = list[i+1].start - m.end;
+            if (avail > 0) {
+              tasks.push({ min: m.end, time: `${min2str(m.end)} - ${min2str(list[i+1].start)}`, name: `LIMPEZA DA SALA ${room}`, sub: `Disponível: ${avail} min`, room, tag: tagClass });
+            }
+          }
+        });
+      });
+
+      tasks.push({ min: lastStart + 20, time: min2str(lastStart + 20), name: 'FECHAMENTO DO PORTÃO', sub: '20m após último início', room: 'GERAL', tag: 'tag-geral' });
+      tasks.push({ min: lastEnd + 20, time: min2str(lastEnd + 20), name: 'SAÍDA DE FUNCIONÁRIOS', sub: '20m após última sessão', room: 'GERAL', tag: 'tag-geral' });
+
+      tasks.sort((a,b)=>a.min-b.min);
+      $('tasksCount').textContent = `${tasks.length} afazeres`;
+
+      const curMin = getCurMin();
+      tasks.forEach(t => {
+        const li = document.createElement('li');
+        li.className = 'task-item';
+        if (Math.abs(curMin - t.min) <= 8) li.classList.add('active');
+        li.innerHTML = `
+          <div class="task-info">
+            <div class="task-name">${t.name}</div>
+            <div class="task-sub">${t.sub}</div>
+          </div>
+          <div style="display:flex; flex-direction:column; align-items:flex-end; gap:3px;">
+            <span class="tag-room ${t.tag}">${t.room}</span>
+            <span class="task-time">${t.time}</span>
+          </div>
+        `;
+        listEl.appendChild(li);
+      });
+    }
+
+    function getCurMin() {
+      if (!isLive) return simMin;
+      const n = new Date();
+      return n.getHours() * 60 + n.getMinutes();
+    }
+
+    let lastTriggered = -1;
+    function updateIndicator() {
+      const curMin = getCurMin();
+      $('indicatorBadge').textContent = min2str(curMin);
+
+      const span = timelineEnd - timelineStart;
+      const clamped = Math.max(timelineStart, Math.min(timelineEnd, curMin));
+      const pct = ((clamped - timelineStart) / span) * 100;
+
+      $('timeIndicator').style.left = `calc(139px + (100% - 153px) * ${pct / 100})`;
+
+      let hitMarker = false;
+      document.querySelectorAll('.pin-marker').forEach(m => {
+        const diff = Math.abs(curMin - parseInt(m.dataset.min, 10));
+        if (diff <= 5) {
+          m.classList.add('active-highlight');
+          hitMarker = true;
+        } else {
+          m.classList.remove('active-highlight');
+        }
+      });
+
+      if (hitMarker && curMin !== lastTriggered) {
+        lastTriggered = curMin;
+        beep();
+      }
+    }
+
+    function openMovie(m, room) {
+      selectedMovie = { m, room };
+      $('movieModalTitle').textContent = m.title;
+      $('movieModalInfo').innerHTML = `
+        <strong>Sala:</strong> ${room}<br>
+        <strong>Horário:</strong> ${min2str(m.start)} às ${min2str(m.end)}<br>
+        <strong>Duração do Filme:</strong> ${m.raw} minutos<br>
+        <strong>Trailers Obrigatórios:</strong> +5 minutos<br>
+        <strong>Tempo Total em Sala:</strong> ${m.dur} minutos
+      `;
+      $('movieModal').classList.add('open');
+    }
+
+    function initUI() {
+      const dGroup = $('dayButtons'), pGroup = $('inputDayPills');
+      dGroup.innerHTML = ''; pGroup.innerHTML = '';
+
+      DAYS.forEach(d => {
+        const b = document.createElement('button');
+        b.className = `day-btn ${d === currentDay ? 'active' : ''}`;
+        b.textContent = d;
+        b.onclick = () => {
+          currentDay = d;
+          document.querySelectorAll('.day-btn').forEach(x=>x.classList.toggle('active', x.textContent===d));
+          render();
+        };
+        dGroup.appendChild(b);
+
+        const p = document.createElement('div');
+        p.className = `p-pill ${d === currentDay ? 'selected' : ''}`;
+        p.textContent = d;
+        p.onclick = () => p.classList.toggle('selected');
+        pGroup.appendChild(p);
+      });
+
+      document.querySelectorAll('.btn-room').forEach(b => {
+        b.onclick = () => {
+          document.querySelectorAll('.btn-room').forEach(x=>x.classList.remove('active'));
+          b.classList.add('active');
+          inputRoom = b.dataset.room;
+        };
+      });
+
+      $('simSlider').oninput = (e) => {
+        simMin = parseInt(e.target.value, 10);
+        $('simLabel').textContent = min2str(simMin);
+        if (!isLive) { updateIndicator(); renderTasks([...(db[currentDay]?.AZUL||[]), ...(db[currentDay]?.VERMELHO||[])]); }
+      };
+
+      $('btnModeToggle').onclick = () => {
+        isLive = !isLive;
+        $('btnModeToggle').textContent = isLive ? 'AO VIVO' : 'SIMULADOR';
+        $('btnModeToggle').classList.toggle('on', isLive);
+        updateIndicator();
+      };
+
+      $('btnNotifyToggle').onclick = async () => {
+        notifyOn = !notifyOn;
+        $('btnNotifyToggle').textContent = notifyOn ? 'NOTIFICAÇÕES' : 'MUTADO';
+        $('btnNotifyToggle').classList.toggle('on', notifyOn);
+        if (notifyOn) {
+          beep();
+          if ('Notification' in window && Notification.permission !== 'granted') {
+            await Notification.requestPermission();
+          }
+        }
+      };
+
+      // Adicionar Filme com Trailers (+5min)
+      $('btnAddSchedule').onclick = () => {
+        const txt = $('scheduleInput').value.trim();
+        if (!txt) return alert('Digite os dados do filme na caixa de texto!');
+        const lines = txt.split('\n').map(l=>l.trim()).filter(l=>l.length>0);
+
+        let selDays = [];
+        document.querySelectorAll('.p-pill.selected').forEach(p => selDays.push(p.textContent));
+        if (selDays.length === 0) selDays = [currentDay];
+
+        let idx = (lines[0].startsWith('[') && lines[0].endsWith(']')) ? 1 : 0;
+        const title = lines[idx] || 'Sem Título'; idx++;
+        const rawDur = parseDuration(lines[idx] || '120'); idx++;
+        const totalDur = rawDur + 5;
+
+        const starts = [];
+        while (idx < lines.length) {
+          const t = str2min(lines[idx]);
+          if (t !== null) starts.push(t);
+          idx++;
+        }
+        if (starts.length === 0) return alert('Informe horários válidos (ex: 15h00)');
+
+        selDays.forEach(d => {
+          if (!db[d]) db[d] = { AZUL: [], VERMELHO: [] };
+          starts.forEach(st => {
+            db[d][inputRoom].push({ id: Date.now()+Math.random(), title, start: st, raw: rawDur, dur: totalDur, end: st + totalDur });
+          });
+        });
+
+        saveData();
+        $('scheduleInput').value = '';
+        render();
+      };
+
+      // Modal Limpar
+      $('btnOpenClear').onclick = () => {
+        $('clearDayName').textContent = currentDay;
+        $('chkConfirmClear').checked = false;
+        $('btnConfirmClear').disabled = true;
+        $('clearModal').classList.add('open');
+      };
+      $('btnCancelClear').onclick = () => $('clearModal').classList.remove('open');
+      $('chkConfirmClear').onchange = (e) => $('btnConfirmClear').disabled = !e.target.checked;
+      $('btnConfirmClear').onclick = () => {
+        const scope = document.querySelector('input[name="clearScope"]:checked').value;
+        if (scope === 'all') {
+          DAYS.forEach(d => db[d] = { AZUL: [], VERMELHO: [] });
+        } else {
+          db[currentDay] = { AZUL: [], VERMELHO: [] };
+        }
+        saveData();
+        $('clearModal').classList.remove('open');
+        render();
+      };
+
+      // Modal Sessão
+      $('btnCancelMovie').onclick = () => $('movieModal').classList.remove('open');
+      $('btnDeleteMovie').onclick = () => {
+        if (!selectedMovie) return;
+        const list = db[currentDay][selectedMovie.room];
+        const i = list.findIndex(x => x.id === selectedMovie.m.id || (x.title === selectedMovie.m.title && x.start === selectedMovie.m.start));
+        if (i !== -1) list.splice(i, 1);
+        saveData();
+        $('movieModal').classList.remove('open');
+        render();
+      };
+
+      // Relógio em tempo real
+      setInterval(() => {
+        const now = new Date();
+        $('liveClockBadge').textContent = now.toLocaleTimeString('pt-BR');
+        if (isLive) {
+          updateIndicator();
+          if (now.getSeconds() === 0) renderTasks([...(db[currentDay]?.AZUL||[]), ...(db[currentDay]?.VERMELHO||[])]);
+        }
+      }, 1000);
+
+      render();
+    }
+
+    window.onload = initUI;
+  </script>
+</body>
+</html>
